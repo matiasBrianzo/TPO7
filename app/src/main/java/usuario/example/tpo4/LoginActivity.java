@@ -35,16 +35,7 @@ public class LoginActivity extends AppCompatActivity {
         vm.getMAccess().observe(this, new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean aBoolean) {
-
                 vm.OpenMenu(aBoolean);
-              /*  if(aBoolean){
-                    // abrir activity el menu
-                    if(aBoolean){
-                        Intent intent = new Intent();
-                        intent.setClass(LoginActivity.this, MainActivity.class);
-                        startActivity(intent);
-                    }
-                }*/
             }
         });
         binding.btIngresar.setOnClickListener(new View.OnClickListener() {
