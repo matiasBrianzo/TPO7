@@ -16,20 +16,24 @@ import usuario.example.tpo4.databinding.FragmentGalleryBinding;
 public class GalleryFragment extends Fragment {
 
     private FragmentGalleryBinding binding;
-
+    private GalleryViewModel vm;
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        GalleryViewModel galleryViewModel =
-                new ViewModelProvider(this).get(GalleryViewModel.class);
+        vm =  new ViewModelProvider(this).get(GalleryViewModel.class);
 
         binding = FragmentGalleryBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        galleryViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
-            @Override
-            public void onChanged(String s) {
-                binding.ivfoto.setImageResource(R.drawable.casa2);
-            }
+        binding.btnPlay.setOnClickListener(view -> {
+            vm.startPlaying(getContext(), R.raw.musica);
+        });
+
+        binding.btnPause.setOnClickListener(view -> {
+            vm.pausePlaying();
+        });
+
+        binding.btnStop.setOnClickListener(view -> {
+            vm.stopPlaying();
         });
         return root;
     }
@@ -38,5 +42,9 @@ public class GalleryFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+
+        if (vm != null) {
+            vm.stopPlaying();
+        }
     }
 }

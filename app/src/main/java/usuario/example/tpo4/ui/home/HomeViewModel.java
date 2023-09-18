@@ -9,54 +9,73 @@ import android.net.Uri;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-public class HomeViewModel extends AndroidViewModel {
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
-    private Context context;
-    private  MutableLiveData<String> mCadena;
+public class HomeViewModel extends ViewModel implements OnMapReadyCallback {
 
-    public HomeViewModel(@NonNull Application application) {
-        super(application);
-        this.context=application.getApplicationContext();
-    }
+    private static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
 
-    public LiveData<String> getMError() {
-        if(mCadena == null) {
-            mCadena = new MutableLiveData<>();
+    private MutableLiveData<Boolean> locationPermissionGranted = new MutableLiveData<>();
+    private MutableLiveData<GoogleMap> map = new MutableLiveData<>();
+    private FusedLocationProviderClient fusedLocationProviderClient;
+    private FragmentActivity fragmentActivity;
+
+
+
+    public LiveData<Boolean> getLocationPermissionGranted() { return locationPermissionGranted; }
+
+    public LiveData<GoogleMap> getMap() { return map; }
+
+    public void initMap(Fragment fragment, MapView mapView) {
+        fragmentActivity = fragment.getActivity();
+
+//        Pedir permiso al usuario para usar la ubicacion
+        if (ActivityCompat.checkSelfPermission(fragmentActivity, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            locationPermissionGranted.setValue(false);
+            ActivityCompat.requestPermissions(fragmentActivity, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, MY_PERMISSIONS_REQUEST_LOCATION);
         }
-        return mCadena;
+
+        mapView.onCreate(null);
+        mapView.getMapAsync(this);
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(fragment.requireActivity());
     }
 
-    public void llamar(String numero){
-        if(numero.isEmpty() || numero.equals(" ")){
-            mCadena.setValue("El numero no puede estar vacio");
-        }else{
-            Intent intent = new Intent(Intent.ACTION_CALL);
-            intent.setData(Uri.parse("tel:" + numero.toString()));
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-           if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions((Activity)context, new String[]{android.Manifest.permission.CALL_PHONE}, 1);
-                return;
-            }
-            context.startActivity(intent);
-        }
-    }
-    public void llamar2(String numero){
-        if(numero.isEmpty() || numero.equals(" ")){
-            mCadena.setValue("El numero no puede estar vacio");
-        }else{
-            Intent intent = new Intent(Intent.ACTION_CALL);
-            intent.setData(Uri.parse("content://call_log/calls" + numero));
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-           /* if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions((Activity)context, new String[]{android.Manifest.permission.CALL_PHONE}, 1);
-                return;
-            }*/
-            context.startActivity(intent);
+    @Override
+    public void onMapReady(@NonNull GoogleMap googleMap) {
+        map.setValue(googleMap);
+
+        if (ActivityCompat.checkSelfPermission(fragmentActivity, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            locationPermissionGranted.setValue(true);
+            googleMap.setMyLocationEnabled(true);
+            fusedLocationProviderClient.getLastLocation().addOnSuccessListener(location -> {
+                if (location != null) {
+                    LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                    googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f));
+
+                    MarkerOptions markerOptions = new MarkerOptions();
+                    markerOptions.position(currentLatLng);
+                    markerOptions.title("Mi ubicacion");
+                    googleMap.addMarker(markerOptions);
+                }
+            });
+        } else {
+            locationPermissionGranted.setValue(false);
         }
     }
 }
