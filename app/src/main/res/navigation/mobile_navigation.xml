@@ -8,7 +8,7 @@
     <fragment
         android:id="@+id/nav_home"
         android:name="usuario.example.tpo4.ui.home.HomeFragment"
-        android:label="LLamar"
+        android:label="Ubicación"
         tools:layout="@layout/fragment_home" />
 
     <fragment
